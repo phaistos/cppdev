@@ -120,3 +120,25 @@ RUN git clone https://github.com/facebook/folly.git && \
     mkdir folly_build && \
     (cd folly_build && cmake ../folly && make -j8 install) && \
     rm -fr folly folly_build
+
+#
+# Other scripts and configuration files
+#
+COPY zshrc /root/.zshrc
+COPY nvim /root/.config/nvim
+
+RUN apt install -y nodejs npm
+
+RUN sh -c 'curl -fLo /root/.local/share/nvim/site/autoload/plug.vim --create-dirs \
+       https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+
+RUN nvim +'PlugInstall --sync' +qa
+RUN nvim +'CocInstall' +qa
+
+#
+# Runtime settings
+#
+WORKDIR /root
+CMD /usr/bin/zsh
+
+
