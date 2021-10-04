@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
 
-docker build --progress=plain -t cppdev:latest .
+docker build -t cppdev:latest .
