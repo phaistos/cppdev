@@ -1,3 +1,4 @@
 #!/usr/bin/env sh
 
-docker build --progress=plain -t cppdev:latest .
+docker build --target cppbase -t cppbase:latest .
+docker build --target cppedit -t cppedit:latest .

@@ -1,4 +1,7 @@
-FROM ubuntu:21.04
+#
+#  IMAGE: cppbase, dev tools and libraries
+#
+FROM ubuntu:21.04 AS cppbase
 LABEL desc="C++ dev container"
 
 #
@@ -11,9 +14,9 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # Update package system & install desired packages
 #
 RUN apt update && apt upgrade -y && apt install
-RUN apt install -y zsh curl wget gcc g++ cmake git neovim \
+RUN apt install -y zsh curl wget gcc g++ cmake git \
                    python3 python3-pip clang-format clang-tools \
-		   cppcheck doxygen graphviz ccls
+		   cppcheck doxygen graphviz
 
 #
 # Install OhMyZsh for fancy prompts, etc.
@@ -33,8 +36,8 @@ RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/inst
 # - eigen:    Math library, linear algebra, etc.
 #
 RUN apt install -y protobuf-compiler libprotobuf-dev libspdlog-dev \
-                   libcaf-dev libzmq5-dev libeigen3-dev libboost-all-dev \
-		   libevent-dev libdouble-conversion-dev libgoogle-glog-dev \
+                   libzmq5-dev libeigen3-dev libboost-all-dev libevent-dev \
+		   libdouble-conversion-dev libgoogle-glog-dev \
 		   libgflags-dev libiberty-dev liblz4-dev liblzma-dev \
 		   libsnappy-dev zlib1g-dev binutils-dev libjemalloc-dev \
 		   libssl-dev pkg-config libunwind-dev
@@ -53,7 +56,7 @@ RUN apt install -y protobuf-compiler libprotobuf-dev libspdlog-dev \
 # - pyzmq:    ZMQ support
 #
 RUN python3 -m pip install --upgrade pip
-RUN python3 -m pip install numpy scipy neovim sympy protobuf pyzmq
+RUN python3 -m pip install numpy scipy sympy protobuf pyzmq
 
 #
 # C++ source libraries
@@ -121,24 +124,28 @@ RUN git clone https://github.com/facebook/folly.git && \
     (cd folly_build && cmake ../folly && make -j8 install) && \
     rm -fr folly folly_build
 
+# Runtime settings
+WORKDIR /root
+CMD /usr/bin/zsh
+
 #
+#  IMAGE: cppedit, adds optional neovim editing capabilities to cppbase
+#
+FROM cppbase as cppedit
+
 # Other scripts and configuration files
-#
 COPY zshrc /root/.zshrc
 COPY nvim /root/.config/nvim
 
-RUN apt install -y nodejs npm
+RUN apt install -y ccls nodejs npm neovim
+RUN python3 -m pip install neovim
 
 RUN sh -c 'curl -fLo /root/.local/share/nvim/site/autoload/plug.vim --create-dirs \
        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 
 RUN nvim +'PlugInstall --sync' +qa
+
 RUN nvim +'CocInstall' +qa
 
-#
-# Runtime settings
-#
-WORKDIR /root
-CMD /usr/bin/zsh
 
 
