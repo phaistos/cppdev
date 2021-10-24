@@ -1,7 +1,7 @@
 #
 #  IMAGE: cppbase, dev tools and libraries
 #
-FROM ubuntu:21.04 AS cppbase
+FROM ubuntu:21.10 AS cppbase
 LABEL desc="C++ dev container"
 
 #
