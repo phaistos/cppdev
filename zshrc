@@ -1,9 +1,19 @@
-export PATH=$HOME/bin:/usr/local/bin:$PATH
-export ZSH=$HOME/.oh-my-zsh
-ZSH_THEME="rgm"
+export PATH=/opt/cuda/bin:$HOME/bin:/usr/local/bin:$HOME/.local/bin:$PATH
+export ZSH="$HOME/.oh-my-zsh"
+export EDITOR='nvim'
+
+ZSH_THEME="candy"
 plugins=(git)
 source $ZSH/oh-my-zsh.sh
-export EDITOR=nvim
 
-export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+if [ -z "$SSH_AUTH_SOCK" ]; then
+   # Check for a currently running instance of the agent
+   RUNNING_AGENT="`ps -ax | grep 'ssh-agent -s' | grep -v grep | wc -l | tr -d '[:space:]'`"
+   if [ "$RUNNING_AGENT" = "0" ]; then
+        # Launch a new instance of the agent
+        ssh-agent -s &> $HOME/.ssh/ssh-agent
+   fi
+   eval `cat $HOME/.ssh/ssh-agent`
+fi

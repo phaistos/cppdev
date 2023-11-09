@@ -1,7 +1,7 @@
 #
 #  IMAGE: cppbase, dev tools and libraries
 #
-FROM ubuntu:21.10 AS cppbase
+FROM ubuntu:22.04 AS cppbase
 LABEL desc="C++ dev container"
 
 #
@@ -15,8 +15,16 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 #
 RUN apt update && apt upgrade -y && apt install
 RUN apt install -y zsh curl wget gcc g++ cmake git \
-                   python3 python3-pip clang-format clang-tools \
-		   cppcheck doxygen graphviz
+                   python3 python3-pip clangd clang-format clang-tools \
+		               cppcheck doxygen graphviz
+                   
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.27.6/cmake-3.27.6-linux-x86_64.sh
+RUN sh ./cmake-3.27.6-linux-x86_64.sh --skip-license --prefix=/usr/local
+RUN rm cmake-3.27.6-linux-x86_64.sh 
+
+RUN cd /usr/local && curl -LO https://github.com/neovim/neovim/releases/download/nightly/nvim-linux64.tar.gz && tar xzf nvim-linux64.tar.gz
+RUN ln -s /usr/local/nvim-linux64/bin/nvim /usr/local/bin/nvim
+RUN rm /usr/local/nvim-linux64.tar.gz
 
 #
 # Install OhMyZsh for fancy prompts, etc.
@@ -25,35 +33,16 @@ RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/inst
 
 #
 # C++ libraries from system packages 
-# - mostly those that require linking
-# - installed as system packages to ease deployment
-#
-# Packages
-# - protobuf: Serialization library and compiler
-# - spdlog:   Logging library
-# - caf:      Actor library
-# - zmq:      Network comms library
-# - eigen:    Math library, linear algebra, etc.
 #
 RUN apt install -y protobuf-compiler libprotobuf-dev libspdlog-dev \
                    libzmq5-dev libeigen3-dev libboost-all-dev libevent-dev \
-		   libdouble-conversion-dev libgoogle-glog-dev \
-		   libgflags-dev libiberty-dev liblz4-dev liblzma-dev \
-		   libsnappy-dev zlib1g-dev binutils-dev libjemalloc-dev \
-		   libssl-dev pkg-config libunwind-dev
+		               libdouble-conversion-dev libgoogle-glog-dev \
+		               libgflags-dev libiberty-dev liblz4-dev liblzma-dev \
+		               libsnappy-dev zlib1g-dev binutils-dev libjemalloc-dev \
+		               libssl-dev pkg-config libunwind-dev
 
 #
 # Python 
-# - update pip
-# - install various useful modules
-#
-# Packages
-# - numpy:    Math library
-# - scipy:    Scientific computing library
-# - neovim:   Support for neovim editor
-# - sympy:    Symbol manipulation library
-# - protobuf: Protobuf support
-# - pyzmq:    ZMQ support
 #
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install numpy scipy sympy protobuf pyzmq
@@ -95,16 +84,10 @@ RUN git clone https://github.com/p-ranav/pprint.git && \
     rm -fr pprint pprint_build
 
 # Memory mapped file library
-RUN git clone https://github.com/mandreyel/mio.git && \
+RUN git clone https://github.com/vimpunk/mio.git && \
     mkdir mio_build && \
     (cd mio_build && cmake ../mio && make -j8 install) && \
     rm -fr mio mio_build
-
-# Simd optimized json parser
-RUN git clone https://github.com/simdjson/simdjson.git && \
-    mkdir simdjson_build && \
-    (cd simdjson_build && cmake ../simdjson && make -j8 install) && \
-    rm -fr simdjson simdjson_build
 
 # Filename globbing library
 RUN git clone https://github.com/p-ranav/glob.git && \
@@ -137,15 +120,13 @@ FROM cppbase as cppedit
 COPY zshrc /root/.zshrc
 COPY nvim /root/.config/nvim
 
-RUN apt install -y ccls nodejs npm neovim
+RUN apt install -y clangd nodejs npm
 RUN python3 -m pip install neovim
 
 RUN sh -c 'curl -fLo /root/.local/share/nvim/site/autoload/plug.vim --create-dirs \
        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 
 RUN nvim +'PlugInstall --sync' +qa
-
-RUN nvim +'CocInstall' +qa
 
 
 
